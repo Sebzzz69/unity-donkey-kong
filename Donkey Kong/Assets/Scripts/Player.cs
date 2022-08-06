@@ -2,6 +2,11 @@ using UnityEngine;
 
 public class Player : MonoBehaviour
 {
+    private SpriteRenderer spriteRenderer;
+    public Sprite[] runSprites;
+    public Sprite climbSprite;
+    private int spriteIndex;
+
     private new Rigidbody2D rigidbody;
     private new Collider2D collider;
     private Collider2D[] results;
@@ -9,17 +14,28 @@ public class Player : MonoBehaviour
 
     public float moveSpeed = 3f;
     public float jumpStrength = 1f;
-    public float spawnPosX = -5.25f;
-    public float spawnPosY = -5.424f;
+    private float spawnPosX = -5.25f;
+    private float spawnPosY = -5.424f;
 
     private bool grounded;
     private bool climbing;
 
     private void Awake()
     {
+        spriteRenderer = GetComponent<SpriteRenderer>();
         rigidbody = GetComponent<Rigidbody2D>();
         collider = GetComponent<Collider2D>();
         results = new Collider2D[4];
+    }
+
+    private void OnEnable()
+    {
+        InvokeRepeating(nameof(AnimateSprite), 1f/12f, 1f/12f);
+    }
+
+    private void OnDisable()
+    {
+        CancelInvoke();
     }
 
     private void CheckCollision()
@@ -105,6 +121,27 @@ public class Player : MonoBehaviour
         {
             transform.position = new Vector3(spawnPosX, spawnPosY);
             Debug.Log("Mario Fell Out Of The World");
+        }
+    }
+
+    private void AnimateSprite()
+    {
+        if (climbing)
+        {
+            spriteRenderer.sprite = climbSprite;
+        }else if (direction.x != 0)
+        {
+            spriteIndex++;
+
+            if (spriteIndex >= runSprites.Length)
+            {
+                spriteIndex = 0;
+            }
+
+            spriteRenderer.sprite = runSprites[spriteIndex];
+        }else if (direction.x == 0)
+        {
+            spriteRenderer.sprite = runSprites[0];
         }
     }
 
