@@ -9,8 +9,11 @@ public class Player : MonoBehaviour
 
     public float moveSpeed = 3f;
     public float jumpStrength = 1f;
+    public float spawnPosX = -5.25f;
+    public float spawnPosY = -5.424f;
 
     private bool grounded;
+    private bool climbing;
 
     private void Awake()
     {
@@ -22,6 +25,7 @@ public class Player : MonoBehaviour
     private void CheckCollision()
     {
         grounded = false;
+        climbing = false;
 
         Vector2 size = collider.bounds.size;
         size.y += 0.1f;
@@ -29,33 +33,44 @@ public class Player : MonoBehaviour
 
         int amount = Physics2D.OverlapBoxNonAlloc(transform.position, size, 0f, results);
 
+        // Loops through objects Mario touches
         for (int i = 0; i < amount; i++)
         {
             GameObject hit = results[i].gameObject;
 
+            
             if (hit.layer == LayerMask.NameToLayer("Ground"))
             {
+                //Sets boolean 'grounded' to true
                 grounded = hit.transform.position.y < transform.position.y - 0.5f;
 
                 //Ignores collision if Mario hits an object above him while jumping
                 Physics2D.IgnoreCollision(collider, results[i], !grounded);
+            } else if (hit.layer == LayerMask.NameToLayer("Ladder"))
+            {
+                climbing = true;
             }
         }
     }
 
+    
 
     private void Update()
     {
         CheckCollision();
 
-        if (grounded && Input.GetButtonDown("Jump"))
+        if (climbing)
         {
-            direction = Vector2.up * jumpStrength;
-        } else if(grounded && Input.GetKeyDown(KeyCode.W))
-        {
-            direction = Vector2.up * jumpStrength;
+            direction.y = Input.GetAxis("Vertical") * moveSpeed;
+
         }
-        else
+        else if (grounded && Input.GetButtonDown("Jump"))
+        {
+            direction = Vector2.up * jumpStrength;
+        } else if (grounded && Input.GetKeyDown(KeyCode.W))
+        {
+            direction = Vector2.up * jumpStrength;
+        } else
         {
             direction += Physics2D.gravity * Time.deltaTime;
         }
@@ -82,6 +97,15 @@ public class Player : MonoBehaviour
     {
         // Moves Mario
         rigidbody.MovePosition(rigidbody.position + direction * Time.fixedDeltaTime);
+    }
+
+    private void OnCollisionEnter2D(Collision2D collision)
+    {
+        if (collision.gameObject.layer == LayerMask.NameToLayer("Border"))
+        {
+            transform.position = new Vector3(spawnPosX, spawnPosY);
+            Debug.Log("Mario Fell Out Of The World");
+        }
     }
 
 }
